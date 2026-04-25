@@ -6,7 +6,7 @@
 // chrome.* or the network. background.ts wires it up to the SW.
 
 import type { ProblemMeta, SubmissionDetail } from "./leetcode";
-import { buildTestsJson, extensionForLang, htmlToMarkdown } from "./leetcode";
+import { buildTestsJson, extensionForLang, extractExampleOutputs, htmlToMarkdown } from "./leetcode";
 import { contentMatches } from "./dedup";
 import { generateBootstrapFiles, generateProblemFiles } from "./repo-bootstrap";
 
@@ -127,6 +127,7 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     const lock = deps.dedup.tryAcquireLock(idStr);
     if (!lock) return { status: "skipped", submissionId: idStr, reason: "in_flight" };
 
+    log("info", `Sync start: submission ${idStr}`);
     try {
       const detail = await deps.leetcode.fetchSubmissionDetail(idStr);
       if (!detail) return { status: "skipped", submissionId: idStr, reason: "missing_detail" };
@@ -134,7 +135,12 @@ export function createOrchestrator(deps: OrchestratorDeps) {
       const problem = await deps.leetcode.fetchProblemMeta(detail.question.titleSlug);
       if (!problem) return { status: "skipped", submissionId: idStr, reason: "missing_problem_meta" };
 
-      const testsJson = buildTestsJson(problem);
+      log("info", `Fetched ${problem.questionFrontendId}. ${problem.title} (${detail.lang.name})`);
+
+      const expectedOutputs = extractExampleOutputs(problem.content);
+      log("info", `Captured ${expectedOutputs.length} expected outputs from problem HTML`);
+
+      const testsJson = buildTestsJson(problem, expectedOutputs);
       const langExt = extensionForLang(detail.lang.name);
       const generated = generateProblemFiles({
         questionFrontendId: problem.questionFrontendId,
@@ -165,6 +171,7 @@ export function createOrchestrator(deps: OrchestratorDeps) {
       const branch = `leetcode/${problem.questionFrontendId.padStart(4, "0")}-${problem.titleSlug}-${idStr}`;
       const commitMsg = `${problem.questionFrontendId}. ${problem.title}`;
 
+      log("info", `Committing ${generated.files.length} files to ${branch}`);
       await deps.github.commitFiles({
         branch,
         baseBranch: deps.config.baseBranch,

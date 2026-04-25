@@ -3,6 +3,7 @@ import {
   extensionForLang,
   htmlToMarkdown,
   buildTestsJson,
+  extractExampleOutputs,
   problemDirName,
   createLeetCodeClient,
   type ProblemMeta,
@@ -58,6 +59,76 @@ describe("htmlToMarkdown", () => {
     const input = "<p>one</p><p>two</p>";
     const out = htmlToMarkdown(input);
     expect(out).not.toMatch(/\n{3,}/);
+  });
+});
+
+describe("extractExampleOutputs", () => {
+  test("extracts a single output from a typical example block", () => {
+    const html = `<p><strong class="example">Example 1:</strong></p>
+<pre><strong>Input:</strong> nums = [2,7,11,15], target = 9
+<strong>Output:</strong> [0,1]
+<strong>Explanation:</strong> Because nums[0] + nums[1] == 9, we return [0, 1].
+</pre>`;
+    expect(extractExampleOutputs(html)).toEqual(["[0,1]"]);
+  });
+
+  test("extracts multiple outputs in document order", () => {
+    const html = `
+<pre><strong>Input:</strong> nums = [2,7,11,15], target = 9
+<strong>Output:</strong> [0,1]
+</pre>
+<pre><strong>Input:</strong> nums = [3,2,4], target = 6
+<strong>Output:</strong> [1,2]
+</pre>
+<pre><strong>Input:</strong> nums = [3,3], target = 6
+<strong>Output:</strong> [0,1]
+</pre>`;
+    expect(extractExampleOutputs(html)).toEqual(["[0,1]", "[1,2]", "[0,1]"]);
+  });
+
+  test("handles outputs without an Explanation that follows", () => {
+    const html = `<pre><strong>Input:</strong> s = "abcabcbb"
+<strong>Output:</strong> 3</pre>`;
+    expect(extractExampleOutputs(html)).toEqual(["3"]);
+  });
+
+  test("decodes HTML entities in outputs", () => {
+    const html = `<pre><strong>Output:</strong> &quot;hello&quot;</pre>`;
+    expect(extractExampleOutputs(html)).toEqual([`"hello"`]);
+  });
+
+  test("strips inner tags (e.g. wrapped in <code>)", () => {
+    const html = `<pre><strong>Output:</strong> <code>true</code></pre>`;
+    expect(extractExampleOutputs(html)).toEqual(["true"]);
+  });
+
+  test("handles boolean and number outputs", () => {
+    const html = `
+<pre><strong>Output:</strong> true</pre>
+<pre><strong>Output:</strong> false</pre>
+<pre><strong>Output:</strong> 3.14159</pre>`;
+    expect(extractExampleOutputs(html)).toEqual(["true", "false", "3.14159"]);
+  });
+
+  test("handles 'Output 1:' / 'Output 2:' numbered variants", () => {
+    const html = `<pre><strong>Output 1:</strong> [1,2]
+<strong>Output 2:</strong> [3,4]</pre>`;
+    expect(extractExampleOutputs(html)).toEqual(["[1,2]", "[3,4]"]);
+  });
+
+  test("returns empty array for null/undefined/empty html", () => {
+    expect(extractExampleOutputs(null)).toEqual([]);
+    expect(extractExampleOutputs(undefined)).toEqual([]);
+    expect(extractExampleOutputs("")).toEqual([]);
+  });
+
+  test("returns empty array when no Output: marker is present", () => {
+    expect(extractExampleOutputs("<p>some prose with no examples</p>")).toEqual([]);
+  });
+
+  test("does not bleed into subsequent content (stops at next <strong>)", () => {
+    const html = `<strong>Output:</strong> [1,2,3]<strong>Note:</strong> something irrelevant`;
+    expect(extractExampleOutputs(html)).toEqual(["[1,2,3]"]);
   });
 });
 
