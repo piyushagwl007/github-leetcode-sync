@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { generateBootstrapFiles, generateProblemFiles } from "../src/lib/repo-bootstrap";
+import { generateBootstrapFiles, generateProblemFiles, wrapForLanguage } from "../src/lib/repo-bootstrap";
 
 describe("generateBootstrapFiles", () => {
   const files = generateBootstrapFiles({ projectName: "leetcode", description: "my solutions" });
@@ -143,16 +143,26 @@ describe("generateProblemFiles", () => {
     ]);
   });
 
-  test("solution file uses the right extension and code verbatim", () => {
+  test("python solution gets the LeetCode compatibility header prepended", () => {
     const out = generateProblemFiles(baseSpec);
     const sol = out.files.find(f => f.path.endsWith("/solution.py"))!;
     expect(sol.content).toContain("class Solution");
-    expect(sol.content).toBe(baseSpec.code);
+    // User's code is preserved verbatim
+    expect(sol.content).toContain(baseSpec.code);
+    // Header brings in typing.* and ListNode / TreeNode
+    expect(sol.content).toContain("from typing import *");
+    expect(sol.content).toContain("from solutions.helpers import ListNode, TreeNode");
+    // Header comes before user code
+    expect(sol.content.indexOf("from typing import *")).toBeLessThan(sol.content.indexOf("class Solution"));
   });
 
-  test("non-python langExt produces solution.<ext> at the right path", () => {
-    const out = generateProblemFiles({ ...baseSpec, langExt: "cpp" });
-    expect(out.files.some(f => f.path === "solutions/0001-two-sum/solution.cpp")).toBe(true);
+  test("non-python langExt produces solution.<ext> at the right path with code unchanged", () => {
+    const out = generateProblemFiles({ ...baseSpec, langExt: "cpp", code: "int main() {}" });
+    const sol = out.files.find(f => f.path === "solutions/0001-two-sum/solution.cpp")!;
+    expect(sol).toBeDefined();
+    // No Python header for non-Python languages
+    expect(sol.content).toBe("int main() {}");
+    expect(sol.content).not.toContain("from typing");
   });
 
   test("tests.json is pretty-printed JSON with trailing newline", () => {
@@ -193,6 +203,12 @@ describe("generateProblemFiles", () => {
     const out = generateProblemFiles({ ...baseSpec, topicTags: [] });
     const r = out.files.find(f => f.path.endsWith("/README.md"))!.content;
     expect(r).toContain("_no tags_");
+  });
+
+  test("does not double-wrap if code already has the compatibility header (re-sync safety)", () => {
+    const onceWrapped = wrapForLanguage(baseSpec.code, "py");
+    const twiceWrapped = wrapForLanguage(onceWrapped, "py");
+    expect(twiceWrapped).toBe(onceWrapped);
   });
 
   test("zero-pads ids of various lengths", () => {

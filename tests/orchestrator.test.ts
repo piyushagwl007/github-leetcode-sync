@@ -1,6 +1,7 @@
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 import { createOrchestrator, type OrchestratorDeps, type SyncConfig } from "../src/lib/orchestrator";
 import type { ProblemMeta, SubmissionDetail } from "../src/lib/leetcode";
+import { wrapForLanguage } from "../src/lib/repo-bootstrap";
 
 const baseConfig: SyncConfig = {
   repoName: "leetcode",
@@ -205,7 +206,8 @@ describe("syncSubmission — dedup gates", () => {
   test("Layer 3 (content equality) skips commit and marks processed", async () => {
     const deps = makeDeps();
     // Pre-existing file matches what we'd commit
-    deps.github.getFileContent = mock(async () => makeDetail().code);
+    // Existing file on GitHub already includes the same compat-wrapped solution
+    deps.github.getFileContent = mock(async () => wrapForLanguage(makeDetail().code, "py"));
     const orch = createOrchestrator(deps);
 
     const result = await orch.syncSubmission("12345");
