@@ -80,7 +80,7 @@ async function buildOrchestrator() {
 function notifyUser(title: string, message: string, _url?: string) {
   chrome.notifications.create({
     type: "basic",
-    iconUrl: chrome.runtime.getURL("popup.html"),
+    iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
     title,
     message,
   });
