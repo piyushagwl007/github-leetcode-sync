@@ -357,9 +357,21 @@ def test_leetcode_solution(leetcode_case: LeetCodeCase) -> None:
 
     solution = load_solution(leetcode_case.problem_dir)
     method = getattr(solution, function_name)
-    actual = method(*parsed_args)
+    return_value = method(*parsed_args)
 
-    assert compare_values(actual, expected, return_type), (
+    # LeetCode convention: when returnType is "void", the method mutates its
+    # first argument in place and the example "Output:" shows that mutated
+    # state. Sort Colors, Move Zeroes, Reverse String, etc. all follow this.
+    if return_type == "void":
+        if not parsed_args:
+            pytest.skip("void return type but no args to inspect")
+        actual = parsed_args[0]
+        compare_type = params[0].get("type") if params else return_type
+    else:
+        actual = return_value
+        compare_type = return_type
+
+    assert compare_values(actual, expected, compare_type), (
         f"input={inputs!r} expected={expected_raw!r} got={actual!r}"
     )
 `;

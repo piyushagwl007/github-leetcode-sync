@@ -84,6 +84,13 @@ describe("generateBootstrapFiles", () => {
     );
   });
 
+  test("test_solutions.py treats void return type as in-place mutation of first arg", () => {
+    const t = byPath["solutions/test_solutions.py"]!;
+    expect(t).toContain('if return_type == "void"');
+    expect(t).toContain("parsed_args[0]");
+    expect(t).toContain("LeetCode convention");
+  });
+
   test("helpers.py exposes ListNode, TreeNode, parse/compare, and UnsupportedTypeError", () => {
     const h = byPath["solutions/helpers.py"]!;
     expect(h).toContain("class ListNode");
