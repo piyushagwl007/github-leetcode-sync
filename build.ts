@@ -1,6 +1,7 @@
-import { rm, mkdir, copyFile, readdir, stat } from "node:fs/promises";
-import { join, dirname } from "node:path";
+import { rm, mkdir, copyFile, readFile, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { existsSync } from "node:fs";
+import { Resvg } from "@resvg/resvg-js";
 
 const watchMode = process.argv.includes("--watch");
 
@@ -20,10 +21,27 @@ const STATIC_COPIES: Array<[string, string]> = [
   ["src/options/options.css", "dist/options.css"],
 ];
 
+const ICON_SIZES = [16, 48, 128] as const;
+const ICON_SVG_PATH = "src/icons/icon.svg";
+
 async function copyIfExists(src: string, dst: string) {
   if (!existsSync(src)) return;
   await mkdir(dirname(dst), { recursive: true });
   await copyFile(src, dst);
+}
+
+async function renderIcons() {
+  if (!existsSync(ICON_SVG_PATH)) return;
+  const svg = await readFile(ICON_SVG_PATH, "utf-8");
+  await mkdir("dist/icons", { recursive: true });
+  for (const size of ICON_SIZES) {
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: "width", value: size },
+      background: "rgba(0,0,0,0)",
+    });
+    const png = resvg.render().asPng();
+    await writeFile(`dist/icons/icon-${size}.png`, png);
+  }
 }
 
 async function buildOnce() {
@@ -52,7 +70,9 @@ async function buildOnce() {
     await copyIfExists(src, dst);
   }
 
-  console.log(`Built ${result.outputs.length} entrypoints to dist/`);
+  await renderIcons();
+
+  console.log(`Built ${result.outputs.length} entrypoints + ${ICON_SIZES.length} icons to dist/`);
 }
 
 if (watchMode) {
