@@ -1,0 +1,17 @@
+{
+  "name": "github-leetcode-sync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run build.ts",
+    "watch": "bun run build.ts --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/chrome": "latest",
+    "typescript": "latest"
+  }
+}
