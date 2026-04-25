@@ -55,11 +55,41 @@ export function generateProblemFiles(spec: ProblemSpec): ProblemFiles {
   return {
     solutionsDir: dir,
     files: [
-      { path: `${dir}/solution.${spec.langExt}`, content: spec.code },
+      { path: `${dir}/solution.${spec.langExt}`, content: wrapForLanguage(spec.code, spec.langExt) },
       { path: `${dir}/tests.json`, content: JSON.stringify(spec.testsJson, null, 2) + "\n" },
       { path: `${dir}/README.md`, content: problemReadme(spec) },
     ],
   };
+}
+
+// LeetCode's Python judge auto-injects standard imports (typing, collections,
+// math, etc.) and provides ListNode / TreeNode in scope. Submitted code
+// relies on these without importing them, so it fails locally with
+// NameError. We prepend the same imports so the file is runnable as-is.
+const PYTHON_COMPAT_HEADER = `# Standard library imports that LeetCode's Python judge auto-injects.
+# Prepended by github-leetcode-sync so the solution is runnable locally.
+from typing import *  # noqa: F401,F403
+from collections import *  # noqa: F401,F403
+import math  # noqa: F401
+import heapq  # noqa: F401
+import bisect  # noqa: F401
+import functools  # noqa: F401
+import itertools  # noqa: F401
+import operator  # noqa: F401
+import string  # noqa: F401
+
+from solutions.helpers import ListNode, TreeNode  # noqa: F401
+
+`;
+
+const COMPAT_HEADER_MARKER = "github-leetcode-sync so the solution is runnable";
+
+export function wrapForLanguage(code: string, langExt: string): string {
+  if (langExt === "py") {
+    if (code.includes(COMPAT_HEADER_MARKER)) return code;
+    return PYTHON_COMPAT_HEADER + code;
+  }
+  return code;
 }
 
 // -- README templates -------------------------------------------------------
