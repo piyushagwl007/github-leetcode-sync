@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "LeetCode → GitHub Sync",
+  "version": "0.1.0",
+  "description": "Auto-commits accepted LeetCode submissions to a GitHub repo as pull requests, with a Python test harness so anyone can run them.",
+  "permissions": ["storage", "cookies", "notifications", "alarms", "scripting"],
+  "host_permissions": [
+    "https://leetcode.com/*",
+    "https://api.github.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://leetcode.com/problems/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": ["https://leetcode.com/*"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "LeetCode → GitHub Sync"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}
