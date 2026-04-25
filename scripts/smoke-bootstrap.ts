@@ -71,7 +71,43 @@ const problem = generateProblemFiles({
 });
 await writeFiles(problem.files);
 
-console.log(`Wrote bootstrap + Two Sum to ${tmpRoot}`);
+// Second problem: a void-return / in-place mutation problem (Sort Colors).
+// Verifies the harness compares the mutated first arg, not the return value.
+const sortColorsCode = `class Solution:
+    def sortColors(self, nums: List[int]) -> None:
+        nums.sort()
+`;
+
+const sortColors = generateProblemFiles({
+  questionFrontendId: "75",
+  titleSlug: "sort-colors",
+  title: "Sort Colors",
+  difficulty: "Medium",
+  langExt: "py",
+  code: sortColorsCode,
+  testsJson: {
+    questionId: "75",
+    title: "Sort Colors",
+    titleSlug: "sort-colors",
+    difficulty: "Medium",
+    functionName: "sortColors",
+    params: [{ name: "nums", type: "integer[]" }],
+    returnType: "void",
+    cases: [
+      { input: ["[2,0,2,1,1,0]"], expected: "[0,0,1,1,2,2]" },
+      { input: ["[2,0,1]"], expected: "[0,1,2]" },
+    ],
+  },
+  problemMarkdown: "Sort an array of 0/1/2 in place.",
+  runtimeDisplay: "0 ms",
+  memoryDisplay: "0 MB",
+  runtimePercentile: 0,
+  memoryPercentile: 0,
+  topicTags: ["Array", "Two Pointers", "Sorting"],
+});
+await writeFiles(sortColors.files);
+
+console.log(`Wrote bootstrap + Two Sum + Sort Colors to ${tmpRoot}`);
 console.log("Running: uv run --group dev pytest");
 
 const proc = Bun.spawnSync({
