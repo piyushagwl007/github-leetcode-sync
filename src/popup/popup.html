@@ -6,9 +6,16 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <main id="root">
+    <main>
       <h1>LeetCode → GitHub Sync</h1>
-      <p>Popup UI lands in PR #8.</p>
+      <p class="status" id="status" aria-live="polite">Loading…</p>
+
+      <div class="actions">
+        <button id="sync-now" type="button">Sync now</button>
+        <button id="open-options" type="button">Settings</button>
+      </div>
+
+      <p class="result" id="last-result" aria-live="polite"></p>
     </main>
     <script type="module" src="popup.js"></script>
   </body>
