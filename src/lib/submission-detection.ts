@@ -5,7 +5,10 @@
 // LeetCode polls this URL every ~500ms after a submission while the verdict
 // transitions from PENDING → STARTED → SUCCESS. Matching captures the
 // numeric submission id from the path.
-export const SUBMISSION_CHECK_PATH_REGEX = /\/submissions\/detail\/(\d+)\/check\/?$/;
+//
+// The terminator is permissive — `/check`, `/check/`, `/check?…`, `/check#…`
+// all match. Earlier `$`-anchored version missed URLs with query strings.
+export const SUBMISSION_CHECK_PATH_REGEX = /\/submissions\/detail\/(\d+)\/check(?:[/?#]|$)/;
 
 export function extractSubmissionId(url: string): string | null {
   const m = SUBMISSION_CHECK_PATH_REGEX.exec(url);
