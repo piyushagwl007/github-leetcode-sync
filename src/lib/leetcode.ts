@@ -169,6 +169,40 @@ export function createLeetCodeClient(deps: LeetCodeDeps) {
   return { fetchUsername, fetchRecentAcSubmissions, fetchSubmissionDetail, fetchProblemMeta };
 }
 
+// Pull the example output values out of a LeetCode problem's HTML content.
+// LeetCode renders examples as:
+//
+//   <p><strong class="example">Example 1:</strong></p>
+//   <pre><strong>Input:</strong> nums = [2,7,11,15], target = 9
+//   <strong>Output:</strong> [0,1]
+//   <strong>Explanation:</strong> ...
+//   </pre>
+//
+// We capture everything after `<strong>Output:</strong>` until the next
+// `<strong>` tag, end of `<pre>`, or end of line — whichever comes first.
+// Returned in document order so it lines up with exampleTestcaseList.
+export function extractExampleOutputs(html: string | null | undefined): string[] {
+  if (!html) return [];
+  const results: string[] = [];
+  const re = /<strong[^>]*>\s*Output\s*\d*\s*:\s*<\/strong>([^]*?)(?=<strong|<\/pre>|\r?\n\s*\r?\n|$)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const raw = m[1] ?? "";
+    const cleaned = raw
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\r?\n.*$/s, "")
+      .trim();
+    if (cleaned) results.push(cleaned);
+  }
+  return results;
+}
+
 // HTML → readable markdown-ish text for the per-problem README.
 export function htmlToMarkdown(html: string | null | undefined): string {
   if (!html) return "";

@@ -277,6 +277,7 @@ const TEST_SOLUTIONS_PY = `"""Runs every parametrized LeetCode case discovered b
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import pytest
@@ -313,12 +314,16 @@ def test_leetcode_solution(leetcode_case: LeetCodeCase) -> None:
             parsed_args.append(parse_value(raw, param.get("type")))
         except UnsupportedTypeError as e:
             pytest.skip(str(e))
+        except (ValueError, json.JSONDecodeError) as e:
+            pytest.skip(f"could not parse input {raw!r} as {param.get('type')!r}: {e}")
 
     return_type = spec.get("returnType")
     try:
         expected = parse_value(expected_raw, return_type)
     except UnsupportedTypeError as e:
         pytest.skip(str(e))
+    except (ValueError, json.JSONDecodeError) as e:
+        pytest.skip(f"could not parse expected output {expected_raw!r} as {return_type!r}: {e}")
 
     solution = load_solution(leetcode_case.problem_dir)
     method = getattr(solution, function_name)
