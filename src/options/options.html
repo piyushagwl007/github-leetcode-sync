@@ -6,9 +6,85 @@
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <main id="root">
-      <h1>Settings</h1>
-      <p>Options form lands in PR #8.</p>
+    <main>
+      <h1>LeetCode → GitHub Sync</h1>
+      <p class="subtitle">Settings</p>
+
+      <form id="config-form" novalidate>
+        <fieldset>
+          <legend>GitHub</legend>
+
+          <label class="field">
+            <span class="label">Personal access token</span>
+            <span class="hint">
+              Create a fine-grained or classic token at
+              <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a>
+              with the <code>repo</code> and <code>workflow</code> scopes.
+            </span>
+            <div class="row">
+              <input type="password" id="github-token" autocomplete="off" required />
+              <button type="button" id="verify-token">Verify</button>
+            </div>
+            <div class="status" id="token-status" aria-live="polite"></div>
+          </label>
+
+          <label class="field">
+            <span class="label">Repo name</span>
+            <span class="hint">Will be created on first sync if it doesn't exist.</span>
+            <input type="text" id="repo-name" placeholder="leetcode-solutions" required />
+          </label>
+
+          <label class="field">
+            <span class="label">GitHub username</span>
+            <span class="hint">Auto-filled when you verify the token.</span>
+            <input type="text" id="github-owner" readonly />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Commit author</legend>
+
+          <label class="field">
+            <span class="label">Name</span>
+            <input type="text" id="author-name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Email</span>
+            <span class="hint">
+              Must be verified on your GitHub account for contributions to count toward your graph.
+              Use the noreply form below if your real email isn't verified.
+            </span>
+            <input type="email" id="author-email" />
+            <div class="row hint">
+              <span>Noreply alternative:</span>
+              <code id="noreply-suggestion">—</code>
+              <button type="button" id="use-noreply">Use this</button>
+            </div>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Behavior</legend>
+
+          <label class="field">
+            <span class="label">Base branch</span>
+            <input type="text" id="base-branch" placeholder="main" />
+          </label>
+
+          <label class="field-inline">
+            <input type="checkbox" id="notifications" checked />
+            <span>Show desktop notifications when a submission syncs</span>
+          </label>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit" id="save">Save</button>
+          <span class="status" id="save-status" aria-live="polite"></span>
+        </div>
+
+        <div class="errors" id="errors" aria-live="polite"></div>
+      </form>
     </main>
     <script type="module" src="options.js"></script>
   </body>
