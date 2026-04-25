@@ -28,11 +28,27 @@ describe("SUBMISSION_CHECK_PATH_REGEX / extractSubmissionId", () => {
     expect(extractSubmissionId("/submissions/detail/1234567890/check/")).toBe("1234567890");
   });
 
+  test("matches when /check is followed by a query string", () => {
+    expect(
+      extractSubmissionId("https://leetcode.com/submissions/detail/12345/check/?source=submit")
+    ).toBe("12345");
+    expect(extractSubmissionId("/submissions/detail/12345/check?foo=bar")).toBe("12345");
+  });
+
+  test("matches when /check is followed by a fragment", () => {
+    expect(extractSubmissionId("/submissions/detail/12345/check#fragment")).toBe("12345");
+  });
+
   test("does NOT match unrelated submission URLs", () => {
     expect(extractSubmissionId("https://leetcode.com/submissions/")).toBeNull();
     expect(extractSubmissionId("https://leetcode.com/submissions/detail/123/")).toBeNull();
     expect(extractSubmissionId("https://leetcode.com/api/submissions/check/")).toBeNull();
     expect(extractSubmissionId("https://leetcode.com/problems/two-sum/submit/")).toBeNull();
+  });
+
+  test("does NOT match URLs that merely contain '/check' as a substring of a different path", () => {
+    expect(extractSubmissionId("/submissions/detail/123/checked")).toBeNull();
+    expect(extractSubmissionId("/submissions/detail/123/check_something")).toBeNull();
   });
 
   test("does NOT match non-numeric ids", () => {

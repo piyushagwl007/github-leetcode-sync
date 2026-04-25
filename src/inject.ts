@@ -18,7 +18,9 @@ import {
 } from "./lib/submission-detection";
 
 (() => {
+  const TAG = "[leetcode-sync inject]";
   const ORIG_FETCH = window.fetch;
+  console.log(`${TAG} fetch patch installed`);
 
   const patched = async function patchedFetch(
     ...args: Parameters<typeof fetch>
@@ -29,22 +31,31 @@ import {
       const url = resolveFetchUrl(args[0]);
       const submissionId = extractSubmissionId(url);
       if (submissionId && response.ok) {
+        console.log(`${TAG} matched check URL for submission ${submissionId}`);
         // Inspect off the critical path; never throw, never block the page.
         response
           .clone()
           .json()
           .then(data => {
-            if (isAcceptedSubmission(data)) {
+            const accepted = isAcceptedSubmission(data);
+            const state = (data as { state?: string })?.state;
+            const verdict = (data as { status_msg?: string })?.status_msg;
+            console.log(
+              `${TAG} verdict for ${submissionId}: state=${state} msg=${verdict} → ${
+                accepted ? "POSTING" : "ignored"
+              }`
+            );
+            if (accepted) {
               window.postMessage(
                 { source: MESSAGE_SOURCE, type: MESSAGE_TYPE_ACCEPTED, submissionId },
                 window.location.origin
               );
             }
           })
-          .catch(() => {});
+          .catch(err => console.warn(`${TAG} could not parse check response`, err));
       }
-    } catch {
-      // Patch must never break the page.
+    } catch (err) {
+      console.warn(`${TAG} unexpected error in patch (page not affected)`, err);
     }
 
     return response;
